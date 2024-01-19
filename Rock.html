@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<head>
+		<title>Rock</title>
+		<style>
+			body {
+				font-family: verdana; 
+				font-size: 15px;
+			}			
+
+		</style>
+	</head>
+	
+<body>
+
+	<label id="current_height_label">Current Height: </label>
+	<label id="max_height_label">Max Height: </label>
+	<canvas id="myCanvas" style="border:2px solid"></canvas>
+	
+<script>
+    var canvas = document.getElementById("myCanvas");
+	var c = canvas.getContext("2d");	
+	canvas.width = window.innerWidth - 20;
+	canvas.height = window.innerHeight - 50;
+
+	// rock class ------------------------------
+
+	class Physics_object {
+		constructor(img, x, y, vx, vy) {
+			this.img = img;
+			this.x = x;
+			this.y = y;
+			this.vx = vx;
+			this.vy = vy;
+		}
+	}
+
+    // initial rock load -----------------------
+
+    let rock = new Image();
+    rock.src = 'rock.png';
+
+	rock.onload = loadImage;
+
+	let rock_obj = new Physics_object(rock, canvas.width / 2 - rock.width / 2 - 300, canvas.height / 2 - rock.height / 2 - 200, 0, 0);
+	obj_arr = [];
+	obj_arr.push(rock_obj);
+
+	// global variables/constants --------------
+
+	let g = 0.08;
+	let friction = 0.03;
+	let maxHeight = -canvas.height;
+
+	// simulation ------------------------------
+
+	function simulate(obj_arr) {
+		for(let i = 0; i < obj_arr.length; i++) {
+
+			// dont update x value or x velocity if rock on ground
+			if (!check_horizontal_collision(obj_arr[i])) {
+				// update position from velocity
+				obj_arr[i].x += obj_arr[i].vx;
+			}
+			else {
+				// object is against wall
+				obj_arr[i].vx = 0;
+			}
+
+
+			// dont update y value or y velocity if rock on ground
+			if (!check_vertical_collision(obj_arr[i])) {
+				obj_arr[i].y += obj_arr[i].vy;
+
+				// update velocity from acceleration
+				obj_arr[i].vy += g;
+
+			}
+			else {
+				// object is on ground
+				obj_arr[i].vy = 0;
+
+				// rock is sliding
+				if (obj_arr[i].vx > 0) {
+					obj_arr[i].vx -= friction;
+				}
+				else if (obj_arr[i].vx < 0) {
+					obj_arr[i].vx += friction;
+				}
+			}
+
+			check_max_height(rock_obj);
+			set_current_height(rock_obj);
+	
+			setRockSimulate(obj_arr[i], obj_arr[i].x, obj_arr[i].y)
+		}
+	}
+
+	function check_max_height(rock_obj) {
+		if (-rock_obj.y > maxHeight) {
+			maxHeight = -rock_obj.y;
+			document.title = "Rock: " + Math.trunc(maxHeight);
+			const elem = document.getElementById("max_height_label");
+			elem.innerHTML = "Max Height: " + Math.trunc(maxHeight);
+		}
+	}
+
+	function set_current_height(rock_obj) {
+		const elem = document.getElementById("current_height_label");
+		elem.innerHTML = "Current Height: " + -(Math.trunc(rock_obj.y));
+	}
+
+	function check_vertical_collision(rock_obj) {
+		if (rock_obj.y + rock_obj.img.height >= canvas.height ) {
+			return true;
+		}
+		return false;
+	}
+
+	function check_horizontal_collision(rock_obj) {
+
+		if (rock_obj.x <= 0 || rock_obj.x + rock_obj.img.width >= canvas.width) {
+			return true;
+		}
+		return false;
+	}
+
+	function throw_calculation(rock_obj, startTime, endTime, startX, startY, endX, endY) {
+		let dt = (endTime - startTime) / 6;
+
+		if (dt != 0) {
+			let dx = endX - startX;
+			let dy = endY - startY;
+
+			let mx = dx / dt;
+			let my = dy / dt;
+
+			rock_obj.vx = mx;
+			rock_obj.vy = my;
+		}
+
+	}
+
+	// rock functions --------------------------
+
+
+	function loadImage() {
+
+		imageX = canvas.width / 2 - this.width / 2;
+		imageY = canvas.height / 2 - this.height / 2;
+
+		c.drawImage(this, imageX, imageY);
+	}
+
+
+	function setRock(rock_obj, x, y) {
+		c.clearRect(0, 0, canvas.width, canvas.height);
+		c.fillStyle = "#7ce9eb";
+        c.fillRect(0, 0, canvas.width, canvas.height);
+
+		imageX = x - rock_obj.img.width / 2;
+		imageY = y - rock_obj.img.height / 2;
+
+		rock_obj.x = imageX;
+		rock_obj.y = imageY;
+		rock_obj.vx = 0;
+		rock_obj.vy = 0;
+
+		check_max_height(rock_obj);
+		set_current_height(rock_obj);
+
+		c.drawImage(rock_obj.img, imageX, imageY);
+	}
+
+	function setRockSimulate(rock_obj, x, y) {
+		c.clearRect(0, 0, canvas.width, canvas.height);
+		c.fillStyle = "#7ce9eb";
+        c.fillRect(0, 0, canvas.width, canvas.height);
+
+		c.drawImage(rock_obj.img, x, y);
+	}
+
+    // move rock -----------------
+
+    var mouseDown = false;
+	let startDragTime = new Date();
+	let endDragTime = new Date();
+	let startX = 0;
+	let startY = 0;
+	let endX = 0;
+	let endY = 0;
+
+	function startDrag(x, y) {
+		let bounds = canvas.getBoundingClientRect();
+
+		let mx = x - bounds.left - canvas.clientLeft;
+		let my = y - bounds.top - canvas.clientTop;
+		mouseDown = true;
+
+		x = mx;
+		y = my;
+
+		startDragTime = new Date();
+		startX = x;
+		startY = y;
+
+		setRock(rock_obj, x, y);
+	}
+
+	function drag(x, y) {
+		if (mouseDown) {
+			let bounds = canvas.getBoundingClientRect();
+			let mx = x - bounds.left - canvas.clientLeft;
+			let my = y - bounds.top - canvas.clientTop;
+
+			x = mx;
+			y = my;
+			
+			setRock(rock_obj, x,y);
+		}
+	}
+
+	function endDrag(x, y) {
+		let bounds = canvas.getBoundingClientRect();
+
+		let mx = x - bounds.left - canvas.clientLeft;
+		let my = y - bounds.top - canvas.clientTop;
+		mouseDown = false;
+
+		x = mx;
+		y = my;
+
+		endDragTime = new Date();
+		endX = x;
+		endY = y;
+
+		throw_calculation(rock_obj, startDragTime, endDragTime, startX, startY, endX, endY);
+	}
+
+    canvas.addEventListener('mousedown', event => {
+		startDrag(event.x, event.y);
+	});
+
+	canvas.addEventListener('mouseup', event => {
+		endDrag(event.x, event.y);
+	});
+
+	canvas.addEventListener('mousemove', event => {
+		drag(event.x, event.y);
+	});
+
+    // main ------------------------
+
+    function update() {
+		if (!mouseDown) {
+			simulate(obj_arr);
+		}
+        requestAnimationFrame(update);
+    }
+
+    update();
+
+</script> 
+</body>
+</html>
