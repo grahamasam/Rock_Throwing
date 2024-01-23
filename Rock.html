@@ -28,12 +28,14 @@
 	// rock class ------------------------------
 
 	class Physics_object {
-		constructor(img, x, y, vx, vy) {
+		constructor(img, x, y, vx, vy, width, height) {
 			this.img = img;
 			this.x = x;
 			this.y = y;
 			this.vx = vx;
 			this.vy = vy;
+			this.width = width;
+			this.height = height;
 		}
 	}
 
@@ -44,7 +46,10 @@
 
 	rock.onload = loadImage;
 
-	let rock_obj = new Physics_object(rock, canvas.width / 2 - rock.width / 2 - 300, canvas.height / 2 - rock.height / 2 - 200, 0, 0);
+	width = canvas.width / 8;
+	height = width * 184 / 351;
+
+	let rock_obj = new Physics_object(rock, canvas.width / 2 - rock.width / 2 - 300, canvas.height / 2 - rock.height / 2 - 200, 0, 0, width, height);
 	obj_arr = [];
 	obj_arr.push(rock_obj);
 
@@ -113,7 +118,7 @@
 	}
 
 	function check_vertical_collision(rock_obj) {
-		if (rock_obj.y + rock_obj.img.height >= canvas.height ) {
+		if (rock_obj.y + rock_obj.height >= canvas.height ) {
 			return true;
 		}
 		return false;
@@ -121,7 +126,7 @@
 
 	function check_horizontal_collision(rock_obj) {
 
-		if (rock_obj.x <= 0 || rock_obj.x + rock_obj.img.width >= canvas.width) {
+		if (rock_obj.x <= 0 || rock_obj.x + rock_obj.width >= canvas.width) {
 			return true;
 		}
 		return false;
@@ -150,7 +155,10 @@
 		imageX = canvas.width / 2 - this.width / 2;
 		imageY = canvas.height / 2 - this.height / 2;
 
-		c.drawImage(this, imageX, imageY);
+		width = canvas.width / 8;
+		height = width * 184 / 351;
+
+		c.drawImage(this, imageX, imageY, width, height);
 	}
 
 
@@ -159,8 +167,8 @@
 		c.fillStyle = "#7ce9eb";
         c.fillRect(0, 0, canvas.width, canvas.height);
 
-		imageX = x - rock_obj.img.width / 2;
-		imageY = y - rock_obj.img.height / 2;
+		imageX = x - rock_obj.width / 2;
+		imageY = y - rock_obj.height / 2;
 
 		rock_obj.x = imageX;
 		rock_obj.y = imageY;
@@ -170,7 +178,7 @@
 		check_max_height(rock_obj);
 		set_current_height(rock_obj);
 
-		c.drawImage(rock_obj.img, imageX, imageY);
+		c.drawImage(rock_obj.img, imageX, imageY, rock_obj.width, rock_obj.height);
 	}
 
 	function setRockSimulate(rock_obj, x, y) {
@@ -178,7 +186,7 @@
 		c.fillStyle = "#7ce9eb";
         c.fillRect(0, 0, canvas.width, canvas.height);
 
-		c.drawImage(rock_obj.img, x, y);
+		c.drawImage(rock_obj.img, x, y, rock_obj.width, rock_obj.height);
 	}
 
     // move rock -----------------
